@@ -1,0 +1,42 @@
+import cv2 as cv
+import mediapipe as mp 
+import time 
+
+
+vid  = cv.VideoCapture(0)
+
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands() #only uses rgb images
+mpDraw = mp.solutions.drawing_utils
+
+pt = 0
+ct = 0
+
+while True:
+    isTrue , frame = vid.read()
+
+    imgRGB = cv.cvtColor(frame,cv.COLOR_BGR2RGB)# thr hands obj only uses rgb color so we conv. it
+    res = hands.process(imgRGB)
+    #print(res.multi_hand_landmarks)
+
+    if res.multi_hand_landmarks:
+
+        for handLms in res.multi_hand_landmarks: # for each hand ladmarks in res.multihand...
+            for id , lm in enumerate(handLms.landmark):
+                print(id,lm)
+                h, w, c = frame.shape
+                cx , cy = int(lm.x*w), int(lm.y*h) #position of center
+                #print(id, cx, cy)
+                if id == 0:
+                    cv.circle(frame,(cx,cy),25,(255,0,255),cv.FILLED)
+
+            mpDraw.draw_landmarks(frame,handLms, mp_hands.HAND_CONNECTIONS)
+    
+    ct = time.time()
+    fps = 1/(ct-pt)
+    pt = ct
+
+    cv.putText(frame,str(int(fps)), (10,70), cv.FONT_HERSHEY_PLAIN ,3, (255,8,255), 3) # 2nd arg is position 3rd is font style 5th is for color and 6th for thickness
+
+    cv.imshow("Image",frame)
+    cv.waitKey(1)
